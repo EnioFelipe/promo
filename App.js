@@ -13,6 +13,8 @@ import ModPesquisas from "./src/screens/ModPesquisas";
 import Relatorio from "./src/screens/Relatorio";
 
 
+
+
 const Stack = createStackNavigator();
 
 const App = () => {
