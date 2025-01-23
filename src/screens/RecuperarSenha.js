@@ -83,6 +83,7 @@ const estilos = StyleSheet.create({
         color: 'white',
         fontSize: 20,
         marginBottom: 5,
+        fontFamily: 'AveriaLibre-Regular',
     },
     textInput: {
         width: '100%',
@@ -93,6 +94,7 @@ const estilos = StyleSheet.create({
     erro: {
         color: 'red',
         marginBottom: 10,
+        fontFamily: 'AveriaLibre-Regular',
     },
     botao: {
         width: '70%',
