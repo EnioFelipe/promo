@@ -12,7 +12,7 @@ const Home = (props) => {
     }
 
     const cartoes = [
-        { capa: require("../images/Meninas.png"), nome: "MENINAS DIGITAIS", data: "07/02/2024"  },
+        { capa: require("../images/Meninas.png"), nome: "MENINAS", data: "07/02/2024"  },
         { capa: require("../images/ubuntu.png"), nome: "UBUNTU 2024", data: "15/06/2024" },
         { capa: require("../images/secomp.png"), nome: "SECOMP 2024", data: "18/11/2024" },
 
@@ -61,16 +61,19 @@ const estilos = StyleSheet.create({
         backgroundColor: '#382474',
         flex: 1,
         alignItems: 'center',
-        width: '100%',
+        justifyContent: 'flex-start',
+       
         
     },
     viewTextInput: {
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: 'white',
+        width: '90%',
         margin: 10,
         height: 40,
         width: '90%',
+        
     },
     textInput: {
         backgroundColor: '#fff',
@@ -95,10 +98,10 @@ const estilos = StyleSheet.create({
     },
     containerCartoes: {
         flexDirection: 'row',
-        justifyContent: 'space-evenly',
-        alignItems: 'left',
-        marginTop: 10,
-        width: '80%',
+        flexWrap: 'wrap', 
+        justifyContent: 'space-around', 
+        width: '100%', 
+        paddingHorizontal: 10, 
     }
 });
 
