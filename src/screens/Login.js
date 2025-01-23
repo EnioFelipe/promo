@@ -2,7 +2,9 @@ import { View, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { TextInput } from 'react-native-paper';
 import { useState } from 'react';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-
+import { auth_mod } from './src/config/firebase';
+import { getAuth } from 'firebase/auth'; 
+import { signInWithEmailAndPassword } from 'firebase/auth';
 
 function validarEmail(email) {
     const valida = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
@@ -14,13 +16,23 @@ const Login = (props) => {
     const [senha, setSenha] = useState('');
     const [erro, setErro] = useState('');
 
-    const irPara = () => {
-        if (!validarEmail(email)) {
-            setErro('E-mail e/ou senha inválidos.');
-        } else {
-            setErro('');
-            props.navigation.navigate('Drawer');
-        }
+    const autenticar = () => {
+        signInWithEmailAndPassword(auth_mod, email, senha)
+            .then((usuarioExistente) => {
+                console.log("Usuário logado!: " + JSON.stringify(usuarioExistente));
+
+                const usuario = getAuth().currentUser;  
+                if (usuario && validarEmail(email)) {
+                    setErro('');  
+                    props.navigation.navigate('Drawer');  
+                } else {
+                    setErro('E-mail e/ou senha inválidos.');
+                }
+            })
+            .catch((erro) => {
+                console.log("Algum erro ocorreu: " + JSON.stringify(erro));
+                setErro('Usuário não autenticado.');
+            });
     };
 
     return (
@@ -53,6 +65,7 @@ const Login = (props) => {
                 <Text style={estilos.tituloInput}>Senha</Text>
                 <TextInput
                     value={senha}
+                    secureTextEntry={true}
                     onChangeText={setSenha}
                     style={estilos.textInput}
                     mode="outlined"
@@ -64,13 +77,12 @@ const Login = (props) => {
                         },
                     }}
                 />
-                <View style={{
-                    height: 30, width: '100%'}}>
+                <View style={{ height: 30, width: '100%' }}>
                     {erro ? <Text style={estilos.erroText}>{erro}</Text> : null}
                 </View>
             </View>
             <TouchableOpacity
-                onPress={irPara}
+                onPress={autenticar}  
                 style={estilos.botaoE}>
                 <Text style={estilos.botaoText}>Entrar</Text>
             </TouchableOpacity>
@@ -135,7 +147,6 @@ const estilos = StyleSheet.create({
         textAlign: 'left',
         marginBottom: 1,
         width: '100%',
-
     },
     botaoE: {
         width: '70%',

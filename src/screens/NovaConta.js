@@ -1,6 +1,15 @@
+// https://temp-mail.org/pt/view/67927c2f7ce47b006ae8c74b
+
 import { View, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { TextInput } from 'react-native-paper';
 import { useState } from 'react';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { auth_mod } from './src/config/firebase';
+
+function validarEmail(email) {
+    const valida = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+    return valida.test(email);
+}
 
 const Login = (props) => {
     const [email, setEmail] = useState('');
@@ -8,14 +17,27 @@ const Login = (props) => {
     const [repet, setRepet] = useState('');
     const [erro, setErro] = useState('');
 
-    const irPara = () => {
+    const novaConta = () => {
+        if (!validarEmail(email)) {
+            setErro('E-mail inválido.');
+            return;
+        }
+        if (!email || !senha) {
+            setErro('Todos os campos devem ser preenchidos');
+            return;
+        }
         if (senha !== repet) {
             setErro('O campo repetir senha difere da senha');
-        } else {
-            setErro('');
-            props.navigation.navigate('Login');
         }
-    };
+        createUserWithEmailAndPassword (auth_mod, email, senha)
+        .then((novoUsuario) => {
+            console.log("Usuário criado com sucesso: " + JSON.stringify(novoUsuario));
+            props.navigation.navigate('Login');
+        })
+        .catch((erro) => {
+            console.log("Algum erro ocorreu: " + JSON.stringify(erro));
+        })
+    }
 
     return (
         <View style={estilos.view}>
@@ -69,7 +91,10 @@ const Login = (props) => {
                     {erro ? <Text style={estilos.erroText}>{erro}</Text> : null}
                 </View>
             </View>
-            <TouchableOpacity onPress={irPara} style={estilos.botaoE}>
+            <TouchableOpacity 
+                onPress={novaConta}  
+                style={estilos.botaoE}
+            >
                 <Text style={estilos.botaoText}>CADASTRAR</Text>
             </TouchableOpacity>
         </View>

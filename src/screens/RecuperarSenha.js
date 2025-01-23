@@ -1,7 +1,8 @@
 import { View, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { TextInput } from 'react-native-paper';
 import { useState } from 'react';
-
+import { sendPasswordResetEmail } from 'firebase/auth';
+import { auth_mod } from './src/config/firebase';
 
 const RecuperarSenha = (props) => {
     const [email, setEmail] = useState('');
@@ -12,16 +13,24 @@ const RecuperarSenha = (props) => {
         return valida.test(email);
     }
 
-    const irPara = () => {
+    const recuperaSenha = () => {
         if (!validarEmail(email)) {
-            setErro('E-mail e/ou senha inválidos.');
-        } else {
-            setErro('');
-            props.navigation.navigate('Login');
+            setErro("Email inválido.");
+            return;
         }
+
+        sendPasswordResetEmail(auth_mod, email)
+            .then(() => {
+                console.log('Email enviado com sucesso!');
+                setErro("Email enviado com sucesso!");
+            })
+            .catch((erro) => {
+                console.log('Erro ao enviar o e-mail: ' + JSON.stringify(erro));
+                setErro("Erro ao tentar enviar o email. Tente novamente.");
+            });
     };
 
-    return ( 
+    return (
         <View style={estilos.view}>
             <View style={estilos.textContainer}>
                 <Text style={estilos.tituloInput}>E-mail</Text>
@@ -41,13 +50,13 @@ const RecuperarSenha = (props) => {
 
                 <Text style={estilos.erro}>{erro}</Text>
 
-                <TouchableOpacity style={estilos.botao} onPress={irPara}>
+                <TouchableOpacity style={estilos.botao} onPress={recuperaSenha}>
                     <Text style={estilos.textoBotao}>Recuperar</Text>
                 </TouchableOpacity>
             </View>
         </View>
     );
-}
+};
 
 const estilos = StyleSheet.create({
     view: {
