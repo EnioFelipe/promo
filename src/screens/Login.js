@@ -5,6 +5,8 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { auth_mod } from './src/config/firebase';
 import { getAuth } from 'firebase/auth'; 
 import { signInWithEmailAndPassword } from 'firebase/auth';
+import { useDispatch } from 'react-redux';
+import { reducerSetLogin } from '../redux/loginSlice';
 
 function validarEmail(email) {
     const valida = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
@@ -15,6 +17,7 @@ const Login = (props) => {
     const [email, setEmail] = useState('');
     const [senha, setSenha] = useState('');
     const [erro, setErro] = useState('');
+    const dispatch = useDispatch()
 
     const autenticar = () => {
         signInWithEmailAndPassword(auth_mod, email, senha)
@@ -23,7 +26,8 @@ const Login = (props) => {
 
                 const usuario = getAuth().currentUser;  
                 if (usuario && validarEmail(email)) {
-                    setErro('');  
+                    setErro('');
+                    dispatch(reducerSetLogin({ email: email}));  
                     props.navigation.navigate('Drawer');  
                 } else {
                     setErro('E-mail e/ou senha inválidos.');
