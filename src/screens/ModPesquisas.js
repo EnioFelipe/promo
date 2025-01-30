@@ -1,11 +1,17 @@
-import { View, Text, TouchableOpacity, StyleSheet, Modal } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, Modal, Pressable } from "react-native";
 import { useState } from "react";
 import { TextInput } from "react-native-paper";
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import {initializeFirestore, collection, addDoc} from 'firebase/firestore'
+import app from './src/config/firebase.js'
+import { launchImageLibrary } from "react-native-image-picker";
+import ImageResizer from "react-native-image-resizer";
+
 
 const ModPesquisas = (props) => {
     const [txtNome, setNome] = useState('');
     const [txtData, setData] = useState('');
+    const [txtImg, setImg] = useState('')
     const [modalVisible, setModalVisible] = useState(false); 
 
     const goToHome = () => {
@@ -19,6 +25,50 @@ const ModPesquisas = (props) => {
     const closeModal = () => {
         setModalVisible(false);
     };
+
+    const db = initializeFirestore(app,{experimentalForceLongPolling: true})
+    const NovPes = collection(db, "pesquisa")    
+
+    const addPesquisa = () =>{
+        const docPesquisa = {
+            txtNome: txtNome,
+            txtData: txtData,
+            txtImg: txtImg
+
+        }
+        addDoc(NovPes, docPesquisa).then( (docRef) =>{
+            console.log("Novo doc"+docRef.id)
+        })
+    }
+
+    const pickImage = ()=>{
+        launchImageLibrary({mediaType:'photo'}, (result)=>{
+            convertUriToBase64(result.assets[0].uri)
+        })
+
+    }
+
+       const convertUriToBase64 = async(uri)=>{
+    
+            const resizedImage = await ImageResizer.createResizedImage(
+                uri, 
+                700,
+                700,
+                'JPEG',
+                100
+            );
+            const imageUri = await fetch(resizedImage.uri)
+            const imagemBlob = await imageUri.blob()
+            console.log(imagemBlob)
+    
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setImg(reader.result)
+            };
+            reader.readAsDataURL(imagemBlob);
+        };
+    
+    
 
     return (
         <View style={estilos.view}>
@@ -56,21 +106,23 @@ const ModPesquisas = (props) => {
                 />
 
                 <Text style={estilos.texto}>Imagem</Text>
-                <TextInput
-                    style={estilos.inputImage}
-                    mode="outlined"
-                    theme={{
-                        colors: {
-                            primary: '#3F92C5',
-                            background: 'white',
-                            placeholder: '#3F92C5',
-                        },
-                    }}
-                    left={<TextInput.Icon icon="party-popper"/>}
-                />
+                <Pressable    style={{
+                      backgroundColor: 'white',
+                     height: 38,
+                    width: 270,
+                    justifyContent: 'center',
+                     alignItems: 'center'
+                }}
+                onPress={pickImage}
+                >
+                    <Icon name="image" size={35} color="purple" />
+                </Pressable>
             </View>
 
-            <TouchableOpacity style={estilos.botao} onPress={goToHome}>
+            <TouchableOpacity style={estilos.botao} onPressIn={()=>{
+                    addPesquisa();
+                    goToHome();
+                }}   >
                 <Text style={estilos.textoBotao}>SALVAR</Text>
             </TouchableOpacity>
 

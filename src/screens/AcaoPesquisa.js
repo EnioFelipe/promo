@@ -7,7 +7,6 @@ const AcaoPesquisa = (props) => {
     const goToModificarPesquisas = () =>{
         props.navigation.navigate('ModPesquisas')
     }
-
     const goToColetarDados = () => {
         props.navigation.navigate('Coleta')
     }

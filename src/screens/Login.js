@@ -2,9 +2,13 @@ import { View, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { TextInput } from 'react-native-paper';
 import { useState } from 'react';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+<<<<<<< HEAD
 import Drawer from './Drawer';
 import { useDispatch } from 'react-redux';
 import { reducerSetLogin } from '../redux/loginSlice';
+=======
+
+>>>>>>> 2581f3346d3b7c2f4c28e8a6460aa533833d74a4
 
 function validarEmail(email) {
     const valida = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
