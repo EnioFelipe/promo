@@ -3,10 +3,13 @@ import { createDrawerNavigator } from '@react-navigation/drawer';
 import { View, TouchableOpacity, Text, Image } from 'react-native';
 import { StyleSheet } from 'react-native';
 import Home from './Home';
+import { useSelector } from 'react-redux';
 
 const DrawerNavigator = createDrawerNavigator();
 
 const Drawer = (props) => {
+
+    const email = useSelector((state) => state.login.email)
 
     irParaLogin = () => {                           
         props.navigation.navigate('Login')          
@@ -15,7 +18,7 @@ const Drawer = (props) => {
     return (
         <DrawerNavigator.Navigator drawerContent={(props) => (
             <View style={{ flex: 1 }}>
-                <Text style={estilos.usuario}>usuario@dominio.com</Text>
+                <Text style={estilos.usuario}>{email}</Text>
                 <View style={estilos.linhaSepara}/>
                 <TouchableOpacity onPress={() => {props.navigation.navigate('Home');}} style={estilos.btnCima}>
                 <Image source={require('../images/paper.png')} style={estilos.icone} />

@@ -3,7 +3,8 @@ import { TextInput } from 'react-native-paper';
 import { useState } from 'react';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Drawer from './Drawer';
-
+import { useDispatch } from 'react-redux';
+import { reducerSetLogin } from '../redux/loginSlice';
 
 function validarEmail(email) {
     const valida = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
@@ -14,12 +15,15 @@ const Login = (props) => {
     const [email, setEmail] = useState('');
     const [senha, setSenha] = useState('');
     const [erro, setErro] = useState('');
+    
+    const dispatch = useDispatch()
 
-    const irPara = () => {
+    const irPara = () => {      
         if (!validarEmail(email)) {
             setErro('E-mail e/ou senha inválidos.');
         } else {
             setErro('');
+            dispatch(reducerSetLogin({ email: email}));
             props.navigation.navigate('Drawer');
         }
     };
