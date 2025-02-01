@@ -2,44 +2,43 @@ import { View, Text, TouchableOpacity, StyleSheet, Modal, Pressable } from "reac
 import { useState } from "react";
 import { TextInput } from "react-native-paper";
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import {initializeFirestore, collection, addDoc} from 'firebase/firestore'
-import app from './src/config/firebase.js'
+import {collection, addDoc, getFirestore, getDoc, doc, updateDoc} from 'firebase/firestore'
+import {app} from './src/config/firebase.js'
+import { storage, ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { launchImageLibrary } from "react-native-image-picker";
 import ImageResizer from "react-native-image-resizer";
+import { useSelector } from 'react-redux';
 
 
 const ModPesquisas = (props) => {
-    const [txtNome, setNome] = useState('');
-    const [txtData, setData] = useState('');
-    const [txtImg, setImg] = useState('')
-    const [modalVisible, setModalVisible] = useState(false); 
+    
+    const id = useSelector((state) => state.pesquisa.id);
+    const pesquisa = useSelector((state)=>state.pesquisa);
+    console.log(pesquisa);
+    const [novoNome, setNovoNome] = useState('');
+    const [novaData, setNovaData] = useState('');
+    const [nomePesquisaError, setNomePesquisaError] = useState('');
+    const [dataPesquisaError, setDataPesquisaError] = useState('');
+    const [showPopUp, setShowPopUp] = useState(false);
+    const [modalVisible, setModalVisible] = useState(false);
+    const [image, setImage] = useState(null);
+    
+    const db = getFirestore(app)
+    const NovPes = collection(db, "pesquisa")    
 
+      
     const goToHome = () => {
         props.navigation.navigate('Home');
     };
 
-    const showModal = () => {
+    const mostrarModal = () => {
         setModalVisible(true);
     };
 
-    const closeModal = () => {
+    const fecharModal = () => {
         setModalVisible(false);
     };
 
-    const db = initializeFirestore(app,{experimentalForceLongPolling: true})
-    const NovPes = collection(db, "pesquisa")    
-
-    const addPesquisa = () =>{
-        const docPesquisa = {
-            txtNome: txtNome,
-            txtData: txtData,
-            txtImg: txtImg
-
-        }
-        addDoc(NovPes, docPesquisa).then( (docRef) =>{
-            console.log("Novo doc"+docRef.id)
-        })
-    }
 
     const pickImage = ()=>{
         launchImageLibrary({mediaType:'photo'}, (result)=>{
@@ -68,6 +67,93 @@ const ModPesquisas = (props) => {
             reader.readAsDataURL(imagemBlob);
         };
     
+    const editarPesquisa = async (id, novoNome, novaData, image) => {
+        if (!novoNome.trim()) {
+            setNomePesquisaError('Preencha o nome da pesquisa');
+        } else {
+            setNomePesquisaError('');
+        }
+    
+        if (!novaData.trim()) {
+            setDataPesquisaError('Preencha a data da pesquisa');
+        } else {
+            setDataPesquisaError('');
+        }
+    
+        if (novoNome.trim() && novaData.trim()) {
+            try {
+            let imageUrl = null;
+    
+            if (image) {
+                try {
+                const response = await fetch(image.uri);
+                const blob = await response.blob();
+                const imageRef = ref(storage, `pesquisas/${Date.now()}_${image.fileName}`);
+                await uploadBytes(imageRef, blob);
+                imageUrl = await getDownloadURL(imageRef);
+                } catch (imageError) {
+                console.error("Erro ao fazer upload da imagem: ", imageError);
+                throw new Error("Falha ao enviar a imagem");
+                }
+            }
+    
+            const pesRef = doc(db, "pesquisas", id);
+            const pesquisaDoc = await getDoc(pesRef);
+    
+            if (pesquisaDoc.exists()) {
+                const pesquisaData = pesquisaDoc.data();
+    
+                if (pesquisaData.imagem) {
+                console.log('URL da imagem antiga:', pesquisaData.imagem);     
+                const oldImageRef = ref(storage, pesquisaData.imagem);
+    
+                try {
+                    await deleteObject(oldImageRef);
+                    console.log('Imagem antiga deletada com sucesso.');
+                } catch (deleteError) {
+                    console.error('Erro ao deletar a imagem antiga:', deleteError);
+                }
+                }
+    
+                const novaPesquisa = {
+                nome: novoNome,
+                data: novaData,
+                imagem: imageUrl,
+                };
+    
+                await updateDoc(pesRef, novaPesquisa);
+                goToHome();
+            } else {
+                console.error("Documento não encontrado");
+            }
+    
+            } catch (error) {
+            console.error("Erro ao modificar a pesquisa: ", error);
+            }
+        }
+    }
+
+    const deletarPesquisa = async (id) => {
+        const docRef = doc(db, "pesquisas", id);
+    
+        try {
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            const imageUrl = data.imagem;
+            const imageRef = ref(storage, imageUrl);
+            console.log('Tentando deletar a imagem com URL:', imageUrl);
+            await deleteObject(imageRef);
+            await deleteDoc(docRef);
+            console.log('Documento deletado com sucesso.');
+            goToHome();
+          } else {
+            console.log("Documento não encontrado!");
+          }
+        } catch (error) {
+          console.error('Erro ao deletar a pesquisa:');
+        }
+    };
     
 
     return (
@@ -75,8 +161,8 @@ const ModPesquisas = (props) => {
             <View style={estilos.textContainer}>
                 <Text style={estilos.texto}>Nome</Text>
                 <TextInput
-                    value={txtNome}
-                    onChangeText={setNome}
+                    value={novoNome}
+                    onChangeText={text => setNovoNome(text)}
                     style={estilos.input}
                     mode="outlined"
                     theme={{
@@ -90,8 +176,8 @@ const ModPesquisas = (props) => {
 
                 <Text style={estilos.texto}>Data</Text>
                 <TextInput
-                    value={txtData}
-                    onChangeText={setData}
+                    value={novaData}
+                    onChangeText={text => setNovaData(text)}
                     style={estilos.input}
                     mode="outlined"
                     theme={{
@@ -119,14 +205,11 @@ const ModPesquisas = (props) => {
                 </Pressable>
             </View>
 
-            <TouchableOpacity style={estilos.botao} onPressIn={()=>{
-                    addPesquisa();
-                    goToHome();
-                }}   >
+            <TouchableOpacity style={estilos.botao} onPress={() => editarPesquisa(id, novoNome, novaData, image)}>
                 <Text style={estilos.textoBotao}>SALVAR</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={estilos.iconContainer} onPress={showModal}>
+            <TouchableOpacity style={estilos.iconContainer} onPress={mostrarModal}>
                 <Icon name="delete-outline" size={50} color="#FFFFFF" />
                 <Text style={estilos.textoIcon}>Apagar</Text> 
             </TouchableOpacity>
@@ -135,15 +218,15 @@ const ModPesquisas = (props) => {
                 animationType="slide"
                 transparent={true}
                 visible={modalVisible}
-                onRequestClose={closeModal}
+                onRequestClose={fecharModal}
             >
                 <View style={estilos.modalContainer}>
                     <Text style={estilos.texto2}>Tem certeza que deseja apagar a pesquisa?</Text>
                     <View style={estilos.butContainer}>
-                        <TouchableOpacity style={estilos.but1} onPress={goToHome}>
+                        <TouchableOpacity style={estilos.but1} onPress={() => deletarPesquisa(id)}>
                             <Text style={estilos.textoBut}>Sim</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity style={estilos.but2} onPress={closeModal}>
+                        <TouchableOpacity style={estilos.but2} onPress={fecharModal}>
                             <Text style={estilos.textoBut}>Cancelar</Text>
                         </TouchableOpacity>
                     </View>
@@ -151,6 +234,7 @@ const ModPesquisas = (props) => {
             </Modal>
         </View>
     );
+    
 };
 
 const estilos = StyleSheet.create({

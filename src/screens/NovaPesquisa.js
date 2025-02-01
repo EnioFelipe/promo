@@ -1,33 +1,51 @@
+import { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity , StyleSheet} from "react-native";
-import { useState } from "react";
 import { TextInput } from "react-native-paper";
-import Icon from 'react-native-vector-icons/MaterialIcons';
-
+import {app} from './src/config/firebase.js'
+import { addDoc, query, onSnapshot, getFirestore, collection} from 'firebase/firestore';
 
 const NovaPesquisa = (props) => {
+
+    
+    const db = getFirestore(app)
+
     const [txtNome, setNome] = useState('')
     const [txtData, setData] = useState('')
     const [erro, setErro] = useState('')
     const [erro2, setErro2] = useState('')
+    const pesquisaRef = collection(db, 'pesquisas')
 
-    const goToHome = () => {
-        if(txtNome.trim() == '' && txtData.trim() == ''){
-            setErro('Preencha no nome da pesquisa.')
-            setErro2('Preencha a data.')
-        }else if(txtNome.trim() == '' ){
-            setErro('Preencha no nome da pesquisa.')
-            setErro2('')
-        }else if(txtData.trim() == ''){
-            setErro2('Preencha a data.')
-            setErro('')
-        }  
-        else{
-            setErro('')
-            setErro2('')
-            props.navigation.navigate('Home')
-        }
+    
+    useEffect(() => {
+        const q = query(pesquisaRef);
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const pesquisas = [];
+            snapshot.forEach((doc) => {
+                pesquisas.push({
+                    id: doc.id,
+                    ...doc.data()
+                });
+            });
+        });
+    
+        return () => unsubscribe();
+    
+    }, []); 
+       
+    
+    const addPesquisa= () => {
+        const pesquisa = {
+            nome: txtNome,
+            data: txtData
+        }    
 
-            
+        addDoc(pesquisaRef, pesquisa).then((docRef) => {
+            console.log('Documento cadastrado com sucesso' + docRef.id)  
+            props.navigation.navigate('Home')          
+        }).catch((erro) => {
+            console.log(erro)
+        })
+       
     }
 
     return(
@@ -64,7 +82,7 @@ const NovaPesquisa = (props) => {
                             placeholder: '#3F92C5',
                         },
                     }}
-/>
+                />
                 <Text style={estilos.textoErro}>´{erro2}</Text>
 
                 <Text style={estilos.texto}>Imagem</Text>
@@ -84,7 +102,7 @@ const NovaPesquisa = (props) => {
             
             </View>
 
-            <TouchableOpacity style={estilos.botao} onPress={goToHome}>
+            <TouchableOpacity style={estilos.botao} onPress={addPesquisa}>
                 <Text style={estilos.textoBotao}>CADASTRAR</Text>
             </TouchableOpacity>
         </View>

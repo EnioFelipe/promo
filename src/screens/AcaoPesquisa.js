@@ -1,12 +1,18 @@
 import { View, Text, TouchableOpacity , StyleSheet} from "react-native";
 import Icon from 'react-native-vector-icons/MaterialIcons'
 import Icon2 from 'react-native-vector-icons/MaterialCommunityIcons'
+import { useSelector } from "react-redux";
+
 
 const AcaoPesquisa = (props) => {
 
+    const statePesquisa = useSelector(state => state.pesquisa);
     const goToModificarPesquisas = () =>{
+        console.log(statePesquisa);
         props.navigation.navigate('ModPesquisas')
     }
+    
+    
     const goToColetarDados = () => {
         props.navigation.navigate('Coleta')
     }

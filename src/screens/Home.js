@@ -1,46 +1,76 @@
-import { View, Text, StyleSheet, Image, Pressable } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, Image, Pressable, FlatList, TouchableOpacity } from 'react-native';
 import { TextInput } from 'react-native-paper';
-import Cartao from '../components/Cartao';
+import app from "./src/config/firebase";
+import { collection, getFirestore, onSnapshot, query } from 'firebase/firestore';
+import { useDispatch } from 'react-redux';
+import { reducerSetPesquisa } from '../redux/pesquisaSlice';
+
 
 const Home = (props) => {
 
-    irParaNovaPesquisa = () => {                           
+    const [listaPesquisas, setListaPesquisas] = useState([]);
+    const db = getFirestore(app);
+    const pesquisaCollection = collection(db, 'pesquisas');
+    const [filteredPesquisas, setFilteredPesquisas] = useState([]);
+    const [searchText, setSearchText] = useState('');
+    const dispatch = useDispatch();
+
+    useEffect(() => {
+        const q = query(pesquisaCollection);
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+          const pesquisas = [];
+          snapshot.forEach((doc) => {
+            pesquisas.push({
+              id: doc.id,
+              ...doc.data()
+            });
+          });
+          setListaPesquisas(pesquisas);
+          setFilteredPesquisas(pesquisas);
+        });
+        return () => unsubscribe();
+      }, []);
+    
+    const irParaNovaPesquisa = () => {                           
         props.navigation.navigate('Nova Pesquisa');             
-    }       
-    irParaAcoesPesquisa = () => {                           
-        props.navigation.navigate('Ações')          
+    }  
+
+    const irParaAcoesPesquisa = (id, nome) => {                           
+        dispatch(reducerSetPesquisa({id: id , nome: nome}));
+        props.navigation.navigate('Ações', { id: id, nome: nome });         
     }
 
-    const cartoes = [
-        { capa: require("../images/Meninas.png"), nome: "MENINAS", data: "07/02/2024"  },
-        { capa: require("../images/ubuntu.png"), nome: "UBUNTU 2024", data: "15/06/2024" },
-        { capa: require("../images/secomp.png"), nome: "SECOMP 2024", data: "18/11/2024" },
+    const itemPesquisa = ({ item }) => (
+    <TouchableOpacity
+        style={estilos.card}
+        onPress={() => irParaAcoesPesquisa(item.id, item.nome)}
+    >
+        {item.imagem ? <Image source={{ uri: item.imagem }} style={estilos.cardImage} /> : null}
+        <Text style={estilos.title}>{item.nome}</Text>
+        <Text style={estilos.subtitle}>{item.data}</Text>
 
-    ]
+    </TouchableOpacity>
+    );
 
     return (
-        <View style={estilos.body}>
+            <View style={estilos.body}>
             <View style={estilos.viewTextInput}>
                 <Image source={require('../images/lupa.png')} />
                 <TextInput style={estilos.textInput} placeholder='Insira o termo da busca...' />
             </View>
-            <Pressable onPress={irParaAcoesPesquisa} style={estilos.containerCartoes}>{
-                cartoes.map(
-                    (card, index) => (
-                        <Cartao
-                        key={index} 
-                        onPress={irParaAcoesPesquisa} 
-                        capa={card.capa} 
-                        nome={card.nome} 
-                        data={card.data} 
-                        />
-                    )
-                )
-            }
-            </Pressable>
-                <Pressable onPress={irParaNovaPesquisa} style={estilos.btnNovaPesquisa}>
-                <Text style={estilos.btnPesquisa}>Nova Pesquisa</Text>
-            </Pressable>
+            <View style={estilos.containerCartoes}>
+                <FlatList
+                    data={filteredPesquisas}
+                    renderItem={itemPesquisa}
+                    keyExtractor={item => item.id}
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                />
+            </View>
+        <Pressable onPress={irParaNovaPesquisa} style={estilos.btnNovaPesquisa}>
+            <Text style={estilos.btnPesquisa}>Nova Pesquisa</Text>
+        </Pressable>
         </View>
     )
 }
@@ -102,6 +132,7 @@ const estilos = StyleSheet.create({
         justifyContent: 'space-around', 
         width: '100%', 
         paddingHorizontal: 10, 
+        backgroundColor: '#382474',
     }
 });
 
