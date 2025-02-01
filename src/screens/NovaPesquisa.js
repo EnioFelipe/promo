@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
-import { View, Text, TouchableOpacity , StyleSheet} from "react-native";
+import { View, Text, TouchableOpacity , StyleSheet,Pressable} from "react-native";
 import { TextInput } from "react-native-paper";
 import {app} from './src/config/firebase.js'
-import { addDoc, query, onSnapshot, getFirestore, collection} from 'firebase/firestore';
+import { addDoc, query, onSnapshot, getFirestore, collection,initializeFirestore} from 'firebase/firestore';
+import ImageResizer from "react-native-image-resizer";
+import { launchImageLibrary } from "react-native-image-picker";
 
 const NovaPesquisa = (props) => {
 
@@ -11,6 +13,7 @@ const NovaPesquisa = (props) => {
 
     const [txtNome, setNome] = useState('')
     const [txtData, setData] = useState('')
+    const [txtImg, setImg] = useState('')
     const [erro, setErro] = useState('')
     const [erro2, setErro2] = useState('')
     const pesquisaRef = collection(db, 'pesquisas')
@@ -36,7 +39,8 @@ const NovaPesquisa = (props) => {
     const addPesquisa= () => {
         const pesquisa = {
             nome: txtNome,
-            data: txtData
+            data: txtData,
+            img: txtImg
         }    
 
         addDoc(pesquisaRef, pesquisa).then((docRef) => {
@@ -46,6 +50,54 @@ const NovaPesquisa = (props) => {
             console.log(erro)
         })
        
+    }
+
+    const pickImage = ()=>{
+        launchImageLibrary({mediaType:'photo'}, (result)=>{
+            convertUriToBase64(result.assets[0].uri)
+        })
+
+    }
+
+    const convertUriToBase64 = async(uri)=>{
+
+        const resizedImage = await ImageResizer.createResizedImage(
+            uri, 
+            700,
+            700,
+            'JPEG',
+            100
+        );
+        const imageUri = await fetch(resizedImage.uri)
+        const imagemBlob = await imageUri.blob()
+        console.log(imagemBlob)
+
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setImg(reader.result)
+        };
+        reader.readAsDataURL(imagemBlob);
+    };
+
+
+    const goToHome = () => {
+        if(txtNome.trim() == '' && txtData.trim() == ''){
+            setErro('Preencha no nome da pesquisa.')
+            setErro2('Preencha a data.')
+        }else if(txtNome.trim() == '' ){
+            setErro('Preencha no nome da pesquisa.')
+            setErro2('')
+        }else if(txtData.trim() == ''){
+            setErro2('Preencha a data.')
+            setErro('')
+        }  
+        else{
+            setErro('')
+            setErro2('')
+            props.navigation.navigate('Home')
+        }
+
+
     }
 
     return(
@@ -86,21 +138,22 @@ const NovaPesquisa = (props) => {
                 <Text style={estilos.textoErro}>´{erro2}</Text>
 
                 <Text style={estilos.texto}>Imagem</Text>
-                <TextInput
-                    style={estilos.inputImage}
-                    mode="outlined"
-                    placeholder="Câmera/Galeria de imagens"
-                    theme={{
-                        colors: {
-                            primary: '#3F92C5',
-                            background: 'white',
-                            placeholder: '#3F92C5',
-                        },
-                    }}
-                />
-            
+
             
             </View>
+
+            <Pressable
+                    style={{
+                      backgroundColor: 'white',
+                     height: 38,
+                    width: 270,
+                    justifyContent: 'center',
+                     alignItems: 'center'
+                }}
+                 onPress={pickImage}
+                >
+                     <Text>Camera/Galeria de Imagens</Text>
+                </Pressable>
 
             <TouchableOpacity style={estilos.botao} onPress={addPesquisa}>
                 <Text style={estilos.textoBotao}>CADASTRAR</Text>

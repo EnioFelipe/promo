@@ -19,12 +19,10 @@ const ModPesquisas = (props) => {
     const [novaData, setNovaData] = useState('');
     const [nomePesquisaError, setNomePesquisaError] = useState('');
     const [dataPesquisaError, setDataPesquisaError] = useState('');
-    const [showPopUp, setShowPopUp] = useState(false);
     const [modalVisible, setModalVisible] = useState(false);
     const [image, setImage] = useState(null);
     
     const db = getFirestore(app)
-    const NovPes = collection(db, "pesquisa")    
 
       
     const goToHome = () => {
@@ -40,33 +38,6 @@ const ModPesquisas = (props) => {
     };
 
 
-    const pickImage = ()=>{
-        launchImageLibrary({mediaType:'photo'}, (result)=>{
-            convertUriToBase64(result.assets[0].uri)
-        })
-
-    }
-
-       const convertUriToBase64 = async(uri)=>{
-    
-            const resizedImage = await ImageResizer.createResizedImage(
-                uri, 
-                700,
-                700,
-                'JPEG',
-                100
-            );
-            const imageUri = await fetch(resizedImage.uri)
-            const imagemBlob = await imageUri.blob()
-            console.log(imagemBlob)
-    
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setImg(reader.result)
-            };
-            reader.readAsDataURL(imagemBlob);
-        };
-    
     const editarPesquisa = async (id, novoNome, novaData, image) => {
         if (!novoNome.trim()) {
             setNomePesquisaError('Preencha o nome da pesquisa');

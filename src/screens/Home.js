@@ -46,7 +46,7 @@ const Home = (props) => {
         style={estilos.card}
         onPress={() => irParaAcoesPesquisa(item.id, item.nome)}
     >
-        {item.imagem ? <Image source={{ uri: item.imagem }} style={estilos.cardImage} /> : null}
+        {item.img ? <Image source={{ uri: item.img }} style={estilos.cardImage} /> : null}
         <Text style={estilos.title}>{item.nome}</Text>
         <Text style={estilos.subtitle}>{item.data}</Text>
 
