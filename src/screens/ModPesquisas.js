@@ -1,31 +1,26 @@
+import React, { useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Modal, Pressable } from "react-native";
-import { useState } from "react";
 import { TextInput } from "react-native-paper";
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import {collection, addDoc, getFirestore, getDoc, doc, updateDoc, deleteDoc} from 'firebase/firestore'
-import {app} from './src/config/firebase.js'
+import { collection, addDoc, getFirestore, getDoc, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { app } from './src/config/firebase.js';
 import { storage, ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { launchImageLibrary } from "react-native-image-picker";
 import ImageResizer from "react-native-image-resizer";
 import { useSelector } from 'react-redux';
 
-
-
 const ModPesquisas = (props) => {
-    
     const id = useSelector((state) => state.pesquisa.id);
-    const pesquisa = useSelector((state)=>state.pesquisa);
-    console.log(pesquisa);
-    const [novoNome, setNovoNome] = useState('');
-    const [novaData, setNovaData] = useState('');
+    const pesquisa = useSelector((state) => state.pesquisa);
+    const [novoNome, setNovoNome] = useState(pesquisa.nome || '');
+    const [novaData, setNovaData] = useState(pesquisa.data || '');
     const [nomePesquisaError, setNomePesquisaError] = useState('');
     const [dataPesquisaError, setDataPesquisaError] = useState('');
     const [modalVisible, setModalVisible] = useState(false);
     const [image, setImage] = useState(null);
-    
-    const db = getFirestore(app)
 
-      
+    const db = getFirestore(app);
+
     const goToHome = () => {
         props.navigation.navigate('Home');
     };
@@ -38,19 +33,21 @@ const ModPesquisas = (props) => {
         setModalVisible(false);
     };
 
-    const pickImage = ()=>{
-        launchImageLibrary({mediaType:'photo'}, (result)=>{
-            convertUriToBase64(result.assets[0].uri)
-        })
-
-    }
+    const pickImage = () => {
+        launchImageLibrary({ mediaType: 'photo' }, (result) => {
+            if (!result.didCancel && !result.errorCode && result.assets && result.assets.length > 0) {
+                setImage(result.assets[0]); // Armazena a imagem selecionada no estado
+                console.log("Imagem selecionada:", result.assets[0]); // Verifique no console
+            }
+        });
+    };
 
     const convertUriToBase64 = async (uri) => {
         try {
             const resizedImage = await ImageResizer.createResizedImage(uri, 700, 700, 'JPEG', 100);
             const imageUri = await fetch(resizedImage.uri);
             const imagemBlob = await imageUri.blob();
-    
+
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
                 reader.onloadend = () => resolve(reader.result.split(',')[1]); // Remove o prefixo "data:image/jpeg;base64,"
@@ -62,7 +59,7 @@ const ModPesquisas = (props) => {
             return null;
         }
     };
-    
+
     const editarPesquisa = async (id, novoNome, novaData, image) => {
         if (!novoNome.trim()) {
             setNomePesquisaError('Preencha o nome da pesquisa');
@@ -72,10 +69,10 @@ const ModPesquisas = (props) => {
             setDataPesquisaError('Preencha a data da pesquisa');
             return;
         }
-    
+
         try {
             let base64Image = null;
-    
+
             if (image) {
                 base64Image = await convertUriToBase64(image.uri);
                 if (!base64Image) {
@@ -83,17 +80,17 @@ const ModPesquisas = (props) => {
                     return;
                 }
             }
-    
+
             const pesRef = doc(db, "pesquisas", id);
             const pesquisaDoc = await getDoc(pesRef);
-    
+
             if (pesquisaDoc.exists()) {
                 const novaPesquisa = {
                     nome: novoNome,
                     data: novaData,
-                    imagem: base64Image || pesquisaDoc.data().imagem, 
+                    imagem: base64Image || pesquisaDoc.data().imagem, // Certifique-se de que o nome da propriedade está correto
                 };
-    
+
                 await updateDoc(pesRef, novaPesquisa);
                 console.log("Pesquisa atualizada com sucesso!");
                 goToHome();
@@ -104,29 +101,44 @@ const ModPesquisas = (props) => {
             console.error("Erro ao modificar a pesquisa: ", error);
         }
     };
+    const deletarPesquisa = async (id) => {
+        const docRef = doc(db, "pesquisas", id); // Referência ao documento no Firestore
     
-        const deletarPesquisa = async (id) => {
-            const docRef = doc(db, "pesquisas", id);
-        
-            try {
+        try {
+            // Obtém o documento da pesquisa
             const docSnap = await getDoc(docRef);
+    
             if (docSnap.exists()) {
                 const data = docSnap.data();
-                const imageUrl = data.imagem;
-                const imageRef = ref(storage, imageUrl);
-                console.log('Tentando deletar a imagem com URL:', imageUrl);
-                await deleteObject(imageRef);
+                const imageUrl = data.imagem; // URL da imagem no Firestore
+    
+                // Verifica se a imagem existe e tenta deletá-la do Storage
+                if (imageUrl) {
+                    try {
+                        // Cria uma referência para a imagem no Storage
+                        const imageRef = ref(storage, imageUrl);
+    
+                        // Deleta a imagem do Storage
+                        await deleteObject(imageRef);
+                        console.log('Imagem deletada com sucesso do Storage.');
+                    } catch (error) {
+                        console.error('Erro ao deletar a imagem do Storage:', error);
+                    }
+                }
+    
+                // Deleta o documento do Firestore
                 await deleteDoc(docRef);
-                console.log('Documento deletado com sucesso.');
+                console.log('Documento deletado com sucesso do Firestore.');
+    
+                // Navega de volta para a tela inicial
                 goToHome();
             } else {
-                console.log("Documento não encontrado!");
+                console.log("Documento não encontrado no Firestore!");
             }
-            } catch (error) {
-            console.error('Erro ao deletar a pesquisa:');
-            }
-        };
-    
+        } catch (error) {
+            console.error('Erro ao deletar a pesquisa:', error);
+        }
+    };
 
     return (
         <View style={estilos.view}>
@@ -134,7 +146,10 @@ const ModPesquisas = (props) => {
                 <Text style={estilos.texto}>Nome</Text>
                 <TextInput
                     value={novoNome}
-                    onChangeText={text => setNovoNome(text)}
+                    onChangeText={(text) => {
+                        setNovoNome(text);
+                        setNomePesquisaError('');
+                    }}
                     style={estilos.input}
                     mode="outlined"
                     theme={{
@@ -145,11 +160,15 @@ const ModPesquisas = (props) => {
                         },
                     }}
                 />
+                {nomePesquisaError ? <Text style={estilos.erro}>{nomePesquisaError}</Text> : null}
 
                 <Text style={estilos.texto}>Data</Text>
                 <TextInput
                     value={novaData}
-                    onChangeText={text => setNovaData(text)}
+                    onChangeText={(text) => {
+                        setNovaData(text);
+                        setDataPesquisaError('');
+                    }}
                     style={estilos.input}
                     mode="outlined"
                     theme={{
@@ -159,19 +178,20 @@ const ModPesquisas = (props) => {
                             placeholder: '#3F92C5',
                         },
                     }}
-                    right={<TextInput.Icon icon="calendar"/>}
-
+                    right={<TextInput.Icon icon="calendar" />}
                 />
+                {dataPesquisaError ? <Text style={estilos.erro}>{dataPesquisaError}</Text> : null}
 
                 <Text style={estilos.texto}>Imagem</Text>
-                <Pressable    style={{
-                      backgroundColor: 'white',
-                     height: 38,
-                    width: 270,
-                    justifyContent: 'center',
-                     alignItems: 'center'
-                }}
-                onPress={pickImage}
+                <Pressable
+                    style={{
+                        backgroundColor: 'white',
+                        height: 38,
+                        width: 270,
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                    }}
+                    onPress={pickImage}
                 >
                     <Icon name="image" size={35} color="purple" />
                 </Pressable>
@@ -183,7 +203,7 @@ const ModPesquisas = (props) => {
 
             <TouchableOpacity style={estilos.iconContainer} onPress={mostrarModal}>
                 <Icon name="delete-outline" size={50} color="#FFFFFF" />
-                <Text style={estilos.textoIcon}>Apagar</Text> 
+                <Text style={estilos.textoIcon}>Apagar</Text>
             </TouchableOpacity>
 
             <Modal
@@ -206,8 +226,8 @@ const ModPesquisas = (props) => {
             </Modal>
         </View>
     );
-    
 };
+
 
 const estilos = StyleSheet.create({
     
