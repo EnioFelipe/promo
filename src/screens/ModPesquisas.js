@@ -2,12 +2,13 @@ import { View, Text, TouchableOpacity, StyleSheet, Modal, Pressable } from "reac
 import { useState } from "react";
 import { TextInput } from "react-native-paper";
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import {collection, addDoc, getFirestore, getDoc, doc, updateDoc} from 'firebase/firestore'
+import {collection, addDoc, getFirestore, getDoc, doc, updateDoc, deleteDoc} from 'firebase/firestore'
 import {app} from './src/config/firebase.js'
 import { storage, ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { launchImageLibrary } from "react-native-image-picker";
 import ImageResizer from "react-native-image-resizer";
 import { useSelector } from 'react-redux';
+
 
 
 const ModPesquisas = (props) => {
@@ -19,12 +20,10 @@ const ModPesquisas = (props) => {
     const [novaData, setNovaData] = useState('');
     const [nomePesquisaError, setNomePesquisaError] = useState('');
     const [dataPesquisaError, setDataPesquisaError] = useState('');
-    const [showPopUp, setShowPopUp] = useState(false);
     const [modalVisible, setModalVisible] = useState(false);
     const [image, setImage] = useState(null);
     
     const db = getFirestore(app)
-    const NovPes = collection(db, "pesquisa")    
 
       
     const goToHome = () => {
@@ -39,7 +38,6 @@ const ModPesquisas = (props) => {
         setModalVisible(false);
     };
 
-
     const pickImage = ()=>{
         launchImageLibrary({mediaType:'photo'}, (result)=>{
             convertUriToBase64(result.assets[0].uri)
@@ -47,53 +45,42 @@ const ModPesquisas = (props) => {
 
     }
 
-       const convertUriToBase64 = async(uri)=>{
+    const convertUriToBase64 = async (uri) => {
+        try {
+            const resizedImage = await ImageResizer.createResizedImage(uri, 700, 700, 'JPEG', 100);
+            const imageUri = await fetch(resizedImage.uri);
+            const imagemBlob = await imageUri.blob();
     
-            const resizedImage = await ImageResizer.createResizedImage(
-                uri, 
-                700,
-                700,
-                'JPEG',
-                100
-            );
-            const imageUri = await fetch(resizedImage.uri)
-            const imagemBlob = await imageUri.blob()
-            console.log(imagemBlob)
-    
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setImg(reader.result)
-            };
-            reader.readAsDataURL(imagemBlob);
-        };
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result.split(',')[1]); // Remove o prefixo "data:image/jpeg;base64,"
+                reader.onerror = (error) => reject(error);
+                reader.readAsDataURL(imagemBlob);
+            });
+        } catch (error) {
+            console.error("Erro ao converter imagem para Base64: ", error);
+            return null;
+        }
+    };
     
     const editarPesquisa = async (id, novoNome, novaData, image) => {
         if (!novoNome.trim()) {
             setNomePesquisaError('Preencha o nome da pesquisa');
-        } else {
-            setNomePesquisaError('');
+            return;
         }
-    
         if (!novaData.trim()) {
             setDataPesquisaError('Preencha a data da pesquisa');
-        } else {
-            setDataPesquisaError('');
+            return;
         }
     
-        if (novoNome.trim() && novaData.trim()) {
-            try {
-            let imageUrl = null;
+        try {
+            let base64Image = null;
     
             if (image) {
-                try {
-                const response = await fetch(image.uri);
-                const blob = await response.blob();
-                const imageRef = ref(storage, `pesquisas/${Date.now()}_${image.fileName}`);
-                await uploadBytes(imageRef, blob);
-                imageUrl = await getDownloadURL(imageRef);
-                } catch (imageError) {
-                console.error("Erro ao fazer upload da imagem: ", imageError);
-                throw new Error("Falha ao enviar a imagem");
+                base64Image = await convertUriToBase64(image.uri);
+                if (!base64Image) {
+                    console.error("Erro na conversão da imagem para Base64.");
+                    return;
                 }
             }
     
@@ -101,59 +88,44 @@ const ModPesquisas = (props) => {
             const pesquisaDoc = await getDoc(pesRef);
     
             if (pesquisaDoc.exists()) {
-                const pesquisaData = pesquisaDoc.data();
-    
-                if (pesquisaData.imagem) {
-                console.log('URL da imagem antiga:', pesquisaData.imagem);     
-                const oldImageRef = ref(storage, pesquisaData.imagem);
-    
-                try {
-                    await deleteObject(oldImageRef);
-                    console.log('Imagem antiga deletada com sucesso.');
-                } catch (deleteError) {
-                    console.error('Erro ao deletar a imagem antiga:', deleteError);
-                }
-                }
-    
                 const novaPesquisa = {
-                nome: novoNome,
-                data: novaData,
-                imagem: imageUrl,
+                    nome: novoNome,
+                    data: novaData,
+                    imagem: base64Image || pesquisaDoc.data().imagem, 
                 };
     
                 await updateDoc(pesRef, novaPesquisa);
+                console.log("Pesquisa atualizada com sucesso!");
                 goToHome();
             } else {
                 console.error("Documento não encontrado");
             }
-    
-            } catch (error) {
-            console.error("Erro ao modificar a pesquisa: ", error);
-            }
-        }
-    }
-
-    const deletarPesquisa = async (id) => {
-        const docRef = doc(db, "pesquisas", id);
-    
-        try {
-          const docSnap = await getDoc(docRef);
-          if (docSnap.exists()) {
-            const data = docSnap.data();
-            const imageUrl = data.imagem;
-            const imageRef = ref(storage, imageUrl);
-            console.log('Tentando deletar a imagem com URL:', imageUrl);
-            await deleteObject(imageRef);
-            await deleteDoc(docRef);
-            console.log('Documento deletado com sucesso.');
-            goToHome();
-          } else {
-            console.log("Documento não encontrado!");
-          }
         } catch (error) {
-          console.error('Erro ao deletar a pesquisa:');
+            console.error("Erro ao modificar a pesquisa: ", error);
         }
     };
+    
+        const deletarPesquisa = async (id) => {
+            const docRef = doc(db, "pesquisas", id);
+        
+            try {
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                const imageUrl = data.imagem;
+                const imageRef = ref(storage, imageUrl);
+                console.log('Tentando deletar a imagem com URL:', imageUrl);
+                await deleteObject(imageRef);
+                await deleteDoc(docRef);
+                console.log('Documento deletado com sucesso.');
+                goToHome();
+            } else {
+                console.log("Documento não encontrado!");
+            }
+            } catch (error) {
+            console.error('Erro ao deletar a pesquisa:');
+            }
+        };
     
 
     return (
