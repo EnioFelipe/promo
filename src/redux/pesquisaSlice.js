@@ -12,6 +12,11 @@ export const pesquisaSlice = createSlice({
         reducerSetPesquisa: (state, action) => {
             state.id = action.payload.id;
             state.nome = action.payload.nome;
+            state.pessimo = action.payload.pessimo;
+            state.ruim = action.payload.ruim;
+            state.neutro = action.payload.neutro;
+            state.bom = action.payload.bom;
+            state.excelente = action.payload.excelente;
         }
     }
 })
