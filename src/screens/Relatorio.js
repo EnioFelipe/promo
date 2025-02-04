@@ -1,5 +1,6 @@
 import React from 'react';
-import { ScrollView, Image, StyleSheet, Text , View} from 'react-native';
+import { ScrollView, StyleSheet, Text , View} from 'react-native';
+import PieChart from "react-native-pie-chart";
 
 const Relatorio = () => (
   <ScrollView 
@@ -7,8 +8,17 @@ const Relatorio = () => (
     contentContainerStyle={styles.contentContainer}
   >
     <View style={styles.containerImgText}>
-      <Image source={require('../images/pizza.png')} 
-      style={styles.image}
+      <PieChart
+        widthAndHeight={200}
+        series={[
+          { value: 30, color: "#53D8D8" },
+          { value: 21, color: "#F1CE7E" },
+          { value: 19, color: "#6994FE" },
+          { value: 43, color: "#5FCDA4" },
+          { value: 30, color: "#EA7288" },
+        ]}
+        doughnut={true} 
+        coverRadius={10}
       />
       <View style={styles.containerText}>
         <View style={styles.row}>
@@ -37,12 +47,6 @@ const Relatorio = () => (
 );
 
 const styles = StyleSheet.create({
-  image: {
-    width: 200, 
-    height: 200,   
-    resizeMode: 'contain',
-    marginRight: 50,
-  },
   container: {
     flex: 1, 
     backgroundColor: "#372775",
