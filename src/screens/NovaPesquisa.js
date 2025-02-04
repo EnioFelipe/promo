@@ -43,7 +43,20 @@ const NovaPesquisa = (props) => {
             imagem: txtImagem
         }    
 
-        addDoc(pesquisaRef, pesquisa).then((docRef) => {
+        addDoc(pesquisaRef, { nome: txtNome, data: txtData, imagem: txtImagem}).then((docRef) => {
+            const pesquisa = {
+                nome: txtNome,
+                data: txtData,
+                imagem: txtImagem,
+                id: docRef.id,
+              };
+              updateDoc(docRef, pesquisa)
+          .then(() => {
+            console.log('Documento cadastrado com sucesso' + docRef.id)
+          })
+          .catch((erro) => {
+            console.log(erro)
+          });
             console.log('Documento cadastrado com sucesso' + docRef.id)  
             props.navigation.navigate('Home')          
         }).catch((erro) => {
