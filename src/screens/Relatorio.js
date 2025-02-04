@@ -5,25 +5,32 @@ import { useSelector } from "react-redux";
 
 const Relatorio = () => {
   const data = useSelector((state) => state.pesquisa);
+  
+  const allZero = data.pessimo === 0 && data.excelente === 0 && data.bom === 0 && data.neutro === 0 && data.ruim === 0;
 
   return(
   <ScrollView 
     style={styles.container}
     contentContainerStyle={styles.contentContainer}
   >
+    
     <View style={styles.containerImgText}>
+      {allZero ? (
+        <Text style={styles.texto}>Nenhuma avaliação foi feita ainda.</Text>
+      ) : (
       <PieChart
         widthAndHeight={200}
         series={[
-          { value: data.pesquisa.pessimo, color: "#53D8D8" },
-          { value: data.pesquisa.excelente, color: "#F1CE7E" },
-          { value: data.pesquisa.bom, color: "#6994FE" },
-          { value: data.pesquisa.neutro, color: "#5FCDA4" },
-          { value: data.pesquisa.ruim, color: "#EA7288" },
+          { value: data.pessimo, color: "#53D8D8" },
+          { value: data.excelente, color: "#F1CE7E" },
+          { value: data.bom, color: "#6994FE" },
+          { value: data.neutro, color: "#5FCDA4" },
+          { value: data.ruim, color: "#EA7288" },
         ]}
         doughnut={true} 
         coverRadius={10}
       />
+      )}
       <View style={styles.containerText}>
         <View style={styles.row}>
             <View style={[styles.quadrado, { backgroundColor: '#F1CE7E' }]} />
@@ -71,7 +78,8 @@ const styles = StyleSheet.create({
   },
   containerText:{
     marginTop: 20,
-    justifyContent: 'center'
+    justifyContent: 'center',
+    marginLeft: 20,
   },
   containerImgText:{
     flexDirection: 'row',
