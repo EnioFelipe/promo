@@ -18,24 +18,6 @@ const NovaPesquisa = (props) => {
     const [erro2, setErro2] = useState('')
     const pesquisaRef = collection(db, 'pesquisas')
 
-    
-    useEffect(() => {
-        const q = query(pesquisaRef);
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const pesquisas = [];
-            snapshot.forEach((doc) => {
-                pesquisas.push({
-                    id: doc.id,
-                    ...doc.data()
-                });
-            });
-        });
-    
-        return () => unsubscribe();
-    
-    }, []); 
-       
-    
     const addPesquisa= () => {
         const pesquisa = {
             nome: txtNome,
@@ -79,26 +61,6 @@ const NovaPesquisa = (props) => {
         reader.readAsDataURL(imagemBlob);
     };
 
-
-    const goToHome = () => {
-        if(txtNome.trim() == '' && txtData.trim() == ''){
-            setErro('Preencha no nome da pesquisa.')
-            setErro2('Preencha a data.')
-        }else if(txtNome.trim() == '' ){
-            setErro('Preencha no nome da pesquisa.')
-            setErro2('')
-        }else if(txtData.trim() == ''){
-            setErro2('Preencha a data.')
-            setErro('')
-        }  
-        else{
-            setErro('')
-            setErro2('')
-            props.navigation.navigate('Home')
-        }
-
-
-    }
 
     return(
         <View style={estilos.view}>
