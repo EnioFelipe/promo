@@ -1,8 +1,12 @@
 import React from 'react';
 import { ScrollView, StyleSheet, Text , View} from 'react-native';
 import PieChart from "react-native-pie-chart";
+import { useSelector } from "react-redux";
 
-const Relatorio = () => (
+const Relatorio = () => {
+  const data = useSelector((state) => state.pesquisa);
+
+  return(
   <ScrollView 
     style={styles.container}
     contentContainerStyle={styles.contentContainer}
@@ -11,11 +15,11 @@ const Relatorio = () => (
       <PieChart
         widthAndHeight={200}
         series={[
-          { value: 30, color: "#53D8D8" },
-          { value: 21, color: "#F1CE7E" },
-          { value: 19, color: "#6994FE" },
-          { value: 43, color: "#5FCDA4" },
-          { value: 30, color: "#EA7288" },
+          { value: data.pesquisa.pessimo, color: "#53D8D8" },
+          { value: data.pesquisa.excelente, color: "#F1CE7E" },
+          { value: data.pesquisa.bom, color: "#6994FE" },
+          { value: data.pesquisa.neutro, color: "#5FCDA4" },
+          { value: data.pesquisa.ruim, color: "#EA7288" },
         ]}
         doughnut={true} 
         coverRadius={10}
@@ -44,7 +48,8 @@ const Relatorio = () => (
       </View>
     </View>
   </ScrollView>
-);
+  );
+};
 
 const styles = StyleSheet.create({
   container: {

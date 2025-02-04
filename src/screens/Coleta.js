@@ -2,22 +2,24 @@ import React, { useState } from 'react';
 import { View, StyleSheet, Text, ActivityIndicator } from 'react-native';
 import { ScrollView } from 'react-native-gesture-handler';
 import BotaoColeta from "../components/botaoColeta";
-import { collection, addDoc, serverTimestamp, getFirestore } from 'firebase/firestore'; 
+import { collection, getFirestore, updateDoc } from 'firebase/firestore'; 
 import { app } from '../screens/src/config/firebase.js'; 
+import { useSelector } from "react-redux";
+
 
 
 const db = getFirestore(app);
 
 const Coleta = (props) => {
+    const data = useSelector((state) => state.pesquisa);
     const [loading, setLoading] = useState(false);  
 
     const salvarResposta = async (resposta) => { 
         setLoading(true);                         
-        try {                                                                                                                            
-            await addDoc(collection(db, 'feedbacks'), {   
-                resposta,                                  
-                timestamp: serverTimestamp(),              
-            });
+        try {                                              
+            updateDoc(doc(db, "pesquisas", data.pesquisa.id), {
+                [resposta]: increment(1)
+              });
             console.log('Resposta salva com sucesso:', resposta);
             props.navigation.navigate('Agradecimento');
         } catch (error) {
