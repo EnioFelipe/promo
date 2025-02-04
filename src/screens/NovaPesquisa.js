@@ -37,11 +37,6 @@ const NovaPesquisa = (props) => {
        
     
     const addPesquisa= () => {
-        const pesquisa = {
-            nome: txtNome,
-            data: txtData,
-            imagem: txtImagem
-        }    
 
         addDoc(pesquisaRef, { nome: txtNome, data: txtData, imagem: txtImagem}).then((docRef) => {
             const pesquisa = {
