@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, StyleSheet, Text, ActivityIndicator } from 'react-native';
 import { ScrollView } from 'react-native-gesture-handler';
 import BotaoColeta from "../components/botaoColeta";
-import { collection, getFirestore, updateDoc } from 'firebase/firestore'; 
+import { collection, getFirestore, updateDoc, doc } from 'firebase/firestore'; 
 import { app } from '../screens/src/config/firebase.js'; 
 import { useSelector } from "react-redux";
 
