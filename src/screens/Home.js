@@ -36,15 +36,15 @@ const Home = (props) => {
         props.navigation.navigate('Nova Pesquisa');             
     }  
 
-    const irParaAcoesPesquisa = (id, nome) => {                           
-        dispatch(reducerSetPesquisa({id: id , nome: nome}));
+    const irParaAcoesPesquisa = (id, nome, pessimo, ruim, neutro, bom, excelente) => {                        
+        dispatch(reducerSetPesquisa({id: id , nome: nome, pessimo: pessimo, ruim: ruim, neutro: neutro, bom: bom, excelente: excelente}));
         props.navigation.navigate('Ações', { id: id, nome: nome });         
     }
 
     const itemPesquisa = ({ item }) => (
     <TouchableOpacity
         style={estilos.card}
-        onPress={() => irParaAcoesPesquisa(item.id, item.nome)}
+        onPress={() => irParaAcoesPesquisa(item.id, item.nome, item.pessimo, item.ruim, item.neutro, item.bom, item.excelente)}
     >
         {item.imagem ? <Image source={{ uri: item.imagem }} style={estilos.cardImage} /> : null}
         <Text style={estilos.title}>{item.nome}</Text>
