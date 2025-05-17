@@ -1,139 +1,106 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, Pressable, FlatList, TouchableOpacity } from 'react-native';
-import { TextInput } from 'react-native-paper';
-import app from "./src/config/firebase";
-import { collection, getFirestore, onSnapshot, query } from 'firebase/firestore';
-import { useDispatch } from 'react-redux';
-import { reducerSetPesquisa } from '../redux/pesquisaSlice';
+import React, { useState } from 'react';
+import { View, Text, TextInput, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import PesquisaCard from '../components/PesquisaCard';
+import { pesquisas } from '../mocks/pesquisas';
 
+const Home = ({ navigation }) => {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredPesquisas, setFilteredPesquisas] = useState(pesquisas);
 
-const Home = (props) => {
-
-    const [listaPesquisas, setListaPesquisas] = useState([]);
-    const db = getFirestore(app);
-    const pesquisaCollection = collection(db, 'pesquisas');
-    const [filteredPesquisas, setFilteredPesquisas] = useState([]);
-    const [searchText, setSearchText] = useState('');
-    const dispatch = useDispatch();
-
-    useEffect(() => {
-        const q = query(pesquisaCollection);
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-          const pesquisas = [];
-          snapshot.forEach((doc) => {
-            pesquisas.push({
-              id: doc.id,
-              ...doc.data()
-            });
-          });
-          setListaPesquisas(pesquisas);
-          setFilteredPesquisas(pesquisas);
-        });
-        return () => unsubscribe();
-      }, []);
-    
-    const irParaNovaPesquisa = () => {                           
-        props.navigation.navigate('Nova Pesquisa');             
-    }  
-
-    const irParaAcoesPesquisa = (id, nome) => {                           
-        dispatch(reducerSetPesquisa({id: id , nome: nome}));
-        props.navigation.navigate('Ações', { id: id, nome: nome });         
-    }
-
-    const itemPesquisa = ({ item }) => (
-    <TouchableOpacity
-        style={estilos.card}
-        onPress={() => irParaAcoesPesquisa(item.id, item.nome)}
-    >
-        {item.img ? <Image source={{ uri: item.img }} style={estilos.cardImage} /> : null}
-        <Text style={estilos.title}>{item.nome}</Text>
-        <Text style={estilos.subtitle}>{item.data}</Text>
-
-    </TouchableOpacity>
+  const handleSearch = (text) => {
+    setSearchQuery(text);
+    const filtered = pesquisas.filter(
+      (pesquisa) => pesquisa.nome.toLowerCase().includes(text.toLowerCase())
     );
+    setFilteredPesquisas(filtered);
+  };
 
-    return (
-            <View style={estilos.body}>
-            <View style={estilos.viewTextInput}>
-                <Image source={require('../images/lupa.png')} />
-                <TextInput style={estilos.textInput} placeholder='Insira o termo da busca...' />
-            </View>
-            <View style={estilos.containerCartoes}>
-                <FlatList
-                    data={filteredPesquisas}
-                    renderItem={itemPesquisa}
-                    keyExtractor={item => item.id}
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                />
-            </View>
-        <Pressable onPress={irParaNovaPesquisa} style={estilos.btnNovaPesquisa}>
-            <Text style={estilos.btnPesquisa}>Nova Pesquisa</Text>
-        </Pressable>
-        </View>
-    )
-}
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Minhas Pesquisas</Text>
+      </View>
+      
+      <View style={styles.searchContainer}>
+        <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Buscar pesquisa..."
+          value={searchQuery}
+          onChangeText={handleSearch}
+        />
+      </View>
+      
+      <FlatList
+        data={filteredPesquisas}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <PesquisaCard
+            nome={item.nome}
+            data={item.data}
+            imagem={item.imagem}
+            onPress={() => navigation.navigate('AcoesPesquisa', { pesquisa: item })}
+          />
+        )}
+        contentContainerStyle={styles.listContainer}
+      />
+      
+      <TouchableOpacity
+        style={styles.novaPesquisaButton}
+        onPress={() => navigation.navigate('NovaPesquisa')}
+      >
+        <Text style={styles.buttonText}>Nova Pesquisa</Text>
+      </TouchableOpacity>
+    </View>
+  );
+};
 
-
-const estilos = StyleSheet.create({
-    title: {
-        color: 'blue',
-        fontSize: 20,
-        width: 140,
-        fontFamily: 'AveriaLibre-Regular',
-    },
-    subtitle: {
-        fontSize: 15,
-        fontFamily: 'AveriaLibre-Regular'
-    },
-    body: {
-        backgroundColor: '#382474',
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'flex-start',
-       
-        
-    },
-    viewTextInput: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: 'white',
-        width: '90%',
-        margin: 10,
-        height: 40,
-        width: '90%',
-        
-    },
-    textInput: {
-        backgroundColor: '#fff',
-        width: 300,
-        width: '90%',
-        height: 40,
-        borderRadius: 0,
-        fontFamily: 'AveriaLibre-Regular'
-    },
-    btnNovaPesquisa: {
-        width: '90%',
-        height: 40,
-        backgroundColor: '#37BD6D',
-        justifyContent: 'center',
-        marginTop: 15
-    },
-    btnPesquisa: {
-        color: '#FFFFFF',
-        textAlign: 'center',
-        fontFamily: 'AveriaLibre-Regular',
-        fontSize: 25
-    },
-    containerCartoes: {
-        flexDirection: 'row',
-        flexWrap: 'wrap', 
-        justifyContent: 'space-around', 
-        width: '100%', 
-        paddingHorizontal: 10, 
-        backgroundColor: '#382474',
-    }
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#F5F5F5',
+    padding: 16,
+  },
+  header: {
+    marginBottom: 20,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    marginBottom: 20,
+  },
+  searchIcon: {
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    height: 40,
+  },
+  listContainer: {
+    paddingVertical: 10,
+  },
+  novaPesquisaButton: {
+    backgroundColor: '#6200EE',
+    borderRadius: 8,
+    padding: 16,
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  buttonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
 });
 
 export default Home;

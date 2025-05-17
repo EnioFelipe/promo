@@ -1,198 +1,31 @@
-import { View, StyleSheet, Text, TouchableOpacity } from 'react-native';
-import { TextInput } from 'react-native-paper';
-import { useState } from 'react';
-import Icon from 'react-native-vector-icons/MaterialIcons';
-import { auth_mod } from './src/config/firebase';
-import { getAuth } from 'firebase/auth'; 
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { useDispatch } from 'react-redux';
-import { reducerSetLogin } from '../redux/loginSlice';
+import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 
-function validarEmail(email) {
-    const valida = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
-    return valida.test(email);
-}
-
-const Login = (props) => {
-    const [email, setEmail] = useState('');
-    const [senha, setSenha] = useState('');
-    const [erro, setErro] = useState('');
-    const dispatch = useDispatch()
-
-    const autenticar = () => {
-        signInWithEmailAndPassword(auth_mod, email, senha)
-            .then((usuarioExistente) => {
-                console.log("Usuário logado!: " + JSON.stringify(usuarioExistente));
-
-                const usuario = getAuth().currentUser;  
-                if (usuario && validarEmail(email)) {
-                    setErro('');
-                    dispatch(reducerSetLogin({ email: email}));  
-                    props.navigation.navigate('Drawer');  
-                } else {
-                    setErro('E-mail e/ou senha inválidos.');
-                }
-            })
-            .catch((erro) => {
-                console.log("Algum erro ocorreu: " + JSON.stringify(erro));
-                setErro('Usuário não autenticado.');
-            });
-    };
-
-    return (
-        <View style={estilos.view}>
-            <View style={estilos.container}>
-                <View style={estilos.viewTitulo}>
-                    <Text style={estilos.titulo}>Satisfying.you</Text>
-                </View>
-                <View style={estilos.viewIcon}>
-                    <Icon name="sentiment-satisfied" size={32} color="#FFFFFF" />
-                </View>
-            </View>
-
-            <View style={estilos.textContainer}>
-                <Text style={estilos.tituloInput}>E-mail</Text>
-                <TextInput
-                    value={email}
-                    onChangeText={setEmail}
-                    style={estilos.textInput}
-                    mode="outlined"
-                    theme={{
-                        colors: {
-                            primary: '#3F92C5',
-                            background: 'white',
-                            placeholder: '#3F92C5',
-                        },
-                    }}
-                />
-
-                <Text style={estilos.tituloInput}>Senha</Text>
-                <TextInput
-                    value={senha}
-                    secureTextEntry={true}
-                    onChangeText={setSenha}
-                    style={estilos.textInput}
-                    mode="outlined"
-                    theme={{
-                        colors: {
-                            primary: '#3F92C5',
-                            background: 'white',
-                            placeholder: '#3F92C5',
-                        },
-                    }}
-                />
-                <View style={{ height: 30, width: '100%' }}>
-                    {erro ? <Text style={estilos.erroText}>{erro}</Text> : null}
-                </View>
-            </View>
-            <TouchableOpacity
-                onPress={autenticar}  
-                style={estilos.botaoE}>
-                <Text style={estilos.botaoText}>Entrar</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-                onPress={() => props.navigation.navigate('NovaConta')}
-                style={estilos.botaoC}>
-                <Text style={estilos.botaoText}>Criar minha conta</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-                onPress={() => props.navigation.navigate('RecuperarSenha')}
-                style={estilos.botaoR}>
-                <Text style={estilos.botaoText}>Esqueci minha senha</Text>
-            </TouchableOpacity>
-        </View>
-    );
+const Login = () => {
+  return (
+    <View style={styles.container}>
+      <Text style={styles.text}>Tela de Login (Placeholder)</Text>
+      <Text style={styles.subtext}>Será implementada na Parte 2</Text>
+    </View>
+  );
 };
 
-const estilos = StyleSheet.create({
-    view: {
-        flex: 1,
-        flexDirection: 'column',
-        padding: 5,
-        backgroundColor: '#372775',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    container: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginBottom: 5,
-        marginTop: 10,
-    },
-    viewTitulo: {
-        alignItems: 'center',
-    },
-    viewIcon: {
-        marginLeft: 20,
-    },
-    titulo: {
-        fontFamily: 'AveriaLibre-Regular',
-        fontSize: 32,
-        fontWeight: '400',
-        lineHeight: 30,
-        color: '#FFFFFF',
-        textAlign: 'center',
-    },
-    textContainer: {
-        width: '70%',
-        alignItems: 'center',
-    },
-    textInput: {
-        width: '100%',
-        height: 35,
-        marginBottom: 4,
-        color: '#3F92C5',
-    },
-    tituloInput: {
-        fontFamily: 'AveriaLibre-Regular',
-        fontSize: 18,
-        color: '#FFFFFF',
-        textAlign: 'left',
-        marginBottom: 1,
-        width: '100%',
-    },
-    botaoE: {
-        width: '70%',
-        height: 35,
-        marginBottom: 17,
-        backgroundColor: '#37BD6D',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    botaoText: {
-        fontFamily: 'AveriaLibre-Regular',
-        fontSize: 17,
-        color: '#FFFFFF',
-        textAlign: 'center',
-    },
-    botaoC: {
-        width: '70%',
-        height: 22,
-        marginBottom: 3,
-        marginTop: 19,
-        backgroundColor: '#3F92C5',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    botaoR: {
-        width: '70%',
-        height: 22,
-        marginBottom: 7,
-        marginTop: 3,
-        backgroundColor: '#B0B0B0',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    erroText: {
-        fontFamily: 'AveriaLibre-Regular',
-        fontSize: 12,
-        color: '#FF6B6B',
-        textAlign: 'left',
-        marginTop: 0,
-        marginBottom: 10,
-        width: '100%',
-    },
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F5F5F5',
+  },
+  text: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  subtext: {
+    fontSize: 16,
+    color: '#666666',
+  },
 });
 
 export default Login;
